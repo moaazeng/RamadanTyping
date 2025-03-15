@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Test Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif; /* Modern font */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e0f7fa; /* Light cyan background */
+            margin: 0;
+            color: #263238; /* Dark grey text */
+        }
+
+        .container {
+            background-color: #fff; /* White container */
+            padding: 40px; /* Increased padding */
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Softer shadow */
+            text-align: center;
+            width: 80%; /* Responsive width */
+            max-width: 700px; /* Maximum width */
+        }
+
+        h1 {
+            margin-bottom: 25px; /* Increased margin */
+            color: #00bcd4; /* Cyan accent color */
+        }
+
+        #sentence-display {
+            background-color: #f0f0f0; /* Light grey for sentence background */
+            padding: 20px; /* Increased padding */
+            border-radius: 8px;
+            margin-bottom: 25px; /* Increased margin */
+            font-size: 1.3em; /* Slightly larger font */
+            min-height: 70px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 2px solid #b2ebf2; /* Light cyan border */
+        }
+
+        #user-input {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 12px; /* Increased padding */
+            font-size: 1.2em;
+            border: 2px solid #80deea; /* Medium cyan border */
+            border-radius: 8px;
+            margin-bottom: 25px; /* Increased margin */
+            resize: vertical; /* Allow vertical resize if needed */
+            min-height: 90px;
+            outline: none; /* Remove default focus outline */
+        }
+
+        #user-input:focus {
+            border-color: #00bcd4; /* Darker cyan on focus */
+            box-shadow: 0 0 8px rgba(0, 188, 212, 0.3); /* Focus shadow */
+        }
+
+        #results, #top-speed-display {
+            margin-top: 25px; /* Increased margin */
+            font-weight: bold;
+            color: #37474f; /* Darker grey for results */
+        }
+
+        .error {
+            color: #ff5722; /* Deep orange for errors */
+            background-color: rgba(255, 87, 34, 0.1); /* Light orange background for errors */
+            text-decoration: underline dotted #ff7043; /* Dotted underline */
+        }
+
+        button {
+            padding: 12px 25px; /* Increased button padding */
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            background-color: #00bcd4; /* Cyan button color */
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Added transform transition */
+        }
+
+        button:hover {
+            background-color: #0097a7; /* Darker cyan on hover */
+            transform: scale(1.05); /* Slight scale up on hover */
+        }
+
+        button:active {
+            transform: scale(1.0); /* Reset scale on active */
+        }
+
+        .error-highlight {
+            color: #ff5722; /* Deep orange for incorrect characters in target sentence */
+        }
+
+        #speed-display, #error-display {
+            margin-bottom: 15px; /* Increased margin */
+            font-size: 1.1em;
+        }
+
+        #top-speed-display {
+            font-size: 1em;
+            margin-top: 30px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Typing Speed Test</h1>
+        <div id="sentence-display">
+            <!-- Sentence will be displayed here -->
+        </div>
+        <div id="speed-display">Speed: <span id="wpm">0</span> WPM</div>
+        <div id="error-display">Errors: <span id="error-count">0</span></div>
+        <textarea id="user-input" placeholder="Start typing here..."></textarea>
+        <div id="results" style="display: none;">
+            <p>Final Speed: <span id="final-wpm"></span> WPM</p>
+            <p>Total Errors: <span id="final-error-count"></span></p>
+        </div>
+        <button id="reset-button">Try Again</button>
+        <div id="top-speed-display">
+            Top Speed: <span id="top-speed">0</span> WPM
+        </div>
+    </div>
+
+    <audio id="error-sound" src="error-sound.mp3"></audio> <!-- You'll need to provide an error sound file -->
+
+    <script>
+        const sentenceDisplay = document.getElementById('sentence-display');
+        const userInput = document.getElementById('user-input');
+        const resultsDisplay = document.getElementById('results');
+        const wpmDisplay = document.getElementById('wpm');
+        const errorCountDisplay = document.getElementById('error-count');
+        const finalWpmDisplay = document.getElementById('final-wpm');
+        const finalErrorCountDisplay = document.getElementById('final-error-count');
+        const resetButton = document.getElementById('reset-button');
+        const errorSound = document.getElementById('error-sound');
+        const topSpeedDisplay = document.getElementById('top-speed');
+
+const sentences = [
+"Be just and fair in your dealings with all people, regardless of belief.",
+    "Show kindness and compassion to your parents, for they nurtured you.",
+    "Fulfill your promises and honor your commitments in all matters.",
+    "Treat your neighbors with respect and consideration, fostering harmony.",
+    "Be patient in times of hardship and persevere through challenges.",
+    "Give charity to those in need, sharing your blessings with others.",
+    "Be humble in your success and grateful for Allah's favors.",
+    "Seek knowledge and wisdom, for they are a light in darkness.",
+    "Be moderate in your actions and avoid extremes in all things.",
+    "Control your anger and strive for gentleness in your speech.",
+    "Be honest in your business transactions and avoid deception.",
+    "Invite to good with wisdom and beautiful preaching, engaging with kindness.",
+  "Scaling and performance are key considerations in development.",
+  "Understanding architecture is crucial for building robust systems.",
+  "Good code follows SOLID principles and clean architecture.",
+  "Security should always be a top priority in software.",
+  "A well structured project improves maintainability.",
+  "User experience plays a big role in software adoption.",
+  "Learning new technologies keeps developers competitive.",
+  "Cloud computing is essential for scalable applications.",
+  "Using Git efficiently is a must for software engineers.",
+  "Software performance optimization requires profiling and testing.",
+  "Design patterns help solve common software problems.",
+  "Code readability is just as important as functionality.",
+  "Continuous learning is the key to staying ahead in tech."
+];
+
+
+        let currentSentence = "";
+        let startTime;
+        let endTime;
+        let errors = 0;
+        let sentenceCharacterSpans = [];
+        let typedCharacters = 0;
+        let testStarted = false;
+        let topSpeed = 0; // Variable to hold top speed
+
+        function getRandomSentence() {
+            return sentences[Math.floor(Math.random() * sentences.length)];
+        }
+
+        function displaySentence() {
+            currentSentence = getRandomSentence();
+            sentenceDisplay.innerHTML = '';
+            sentenceCharacterSpans = [];
+
+            for (let i = 0; i < currentSentence.length; i++) {
+                const charSpan = document.createElement('span');
+                charSpan.textContent = currentSentence[i];
+                sentenceDisplay.appendChild(charSpan);
+                sentenceCharacterSpans.push(charSpan);
+            }
+        }
+
+        function loadTopSpeed() {
+            const storedTopSpeed = localStorage.getItem('topSpeed');
+            topSpeed = storedTopSpeed ? parseInt(storedTopSpeed, 10) : 0;
+            topSpeedDisplay.textContent = topSpeed;
+        }
+
+        function saveTopSpeed(currentWPM) {
+            if (currentWPM > topSpeed) {
+                topSpeed = currentWPM;
+                localStorage.setItem('topSpeed', topSpeed.toString());
+                topSpeedDisplay.textContent = topSpeed;
+            }
+        }
+
+
+        function startGame() {
+            displaySentence();
+            userInput.value = '';
+            userInput.disabled = false;
+            resultsDisplay.style.display = 'none';
+            errors = 0;
+            startTime = null;
+            endTime = null;
+            typedCharacters = 0;
+            wpmDisplay.textContent = '0';
+            errorCountDisplay.textContent = '0';
+            testStarted = false;
+
+            sentenceCharacterSpans.forEach(span => {
+                span.classList.remove('error-highlight');
+            });
+
+            userInput.focus();
+        }
+
+        function calculateWPM() {
+            if (!startTime) return 0;
+
+            const currentTime = Date.now();
+            const timeInSeconds = (currentTime - startTime) / 1000;
+            const timeInMinutes = timeInSeconds / 60;
+            const wordsTyped = typedCharacters / 5;
+
+            if (timeInMinutes === 0) return 0;
+
+            let wpm = Math.round((wordsTyped / timeInMinutes) - (errors / timeInMinutes));
+            return Math.max(0, wpm);
+        }
+
+        function checkInput(event) {
+            if (!testStarted && event.inputType) {
+                if (event.inputType !== 'insertFromPaste' && event.inputType !== 'insertComposition') {
+                    testStarted = true;
+                    startTime = Date.now();
+                }
+            }
+
+            if (!testStarted) {
+                return;
+            }
+
+
+            const typedText = userInput.value;
+            typedCharacters = typedText.length;
+            errors = 0;
+
+            sentenceCharacterSpans.forEach(span => span.classList.remove('error-highlight'));
+
+            for (let i = 0; i < typedText.length; i++) {
+                if (i < currentSentence.length) {
+                    if (typedText[i] !== currentSentence[i]) {
+                        sentenceCharacterSpans[i].classList.add('error-highlight');
+                        errors++;
+                        errorSound.play();
+                    }
+                }
+            }
+
+            errorCountDisplay.textContent = errors;
+            wpmDisplay.textContent = calculateWPM();
+        }
+
+
+        userInput.addEventListener('input', checkInput);
+
+        userInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                endTime = Date.now();
+                userInput.disabled = true;
+                const finalWPM = calculateWPM();
+                finalWpmDisplay.textContent = finalWPM;
+                finalErrorCountDisplay.textContent = errors;
+                resultsDisplay.style.display = 'block';
+                alert(`Your Typing Speed: ${finalWPM} WPM`); // Alert with speed
+                saveTopSpeed(finalWPM); // Save top speed
+            }
+        });
+
+        resetButton.addEventListener('click', startGame);
+
+        loadTopSpeed(); // Load top speed on page load
+        startGame();
+    </script>
+</body>
+</html>
