@@ -6,98 +6,98 @@
     <title>Typing Speed Test Game</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif; /* Modern font */
+            font-family: 'Arial', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #e0f7fa; /* Light cyan background */
+            background-color: #e0f7fa;
             margin: 0;
-            color: #263238; /* Dark grey text */
+            color: #263238;
         }
 
         .container {
-            background-color: #fff; /* White container */
-            padding: 40px; /* Increased padding */
-            border-radius: 12px; /* More rounded corners */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Softer shadow */
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             text-align: center;
-            width: 80%; /* Responsive width */
-            max-width: 700px; /* Maximum width */
+            width: 80%;
+            max-width: 700px;
         }
 
         h1 {
-            margin-bottom: 25px; /* Increased margin */
-            color: #00bcd4; /* Cyan accent color */
+            margin-bottom: 25px;
+            color: #00bcd4;
         }
 
         #sentence-display {
-            background-color: #f0f0f0; /* Light grey for sentence background */
-            padding: 20px; /* Increased padding */
+            background-color: #f0f0f0;
+            padding: 20px;
             border-radius: 8px;
-            margin-bottom: 25px; /* Increased margin */
-            font-size: 1.3em; /* Slightly larger font */
+            margin-bottom: 25px;
+            font-size: 1.3em;
             min-height: 70px;
             white-space: pre-wrap;
             word-break: break-word;
-            border: 2px solid #b2ebf2; /* Light cyan border */
+            border: 2px solid #b2ebf2;
         }
 
         #user-input {
-            width: calc(100% - 22px); /* Account for padding and border */
-            padding: 12px; /* Increased padding */
+            width: calc(100% - 22px);
+            padding: 12px;
             font-size: 1.2em;
-            border: 2px solid #80deea; /* Medium cyan border */
+            border: 2px solid #80deea;
             border-radius: 8px;
-            margin-bottom: 25px; /* Increased margin */
-            resize: vertical; /* Allow vertical resize if needed */
+            margin-bottom: 25px;
+            resize: vertical;
             min-height: 90px;
-            outline: none; /* Remove default focus outline */
+            outline: none;
         }
 
         #user-input:focus {
-            border-color: #00bcd4; /* Darker cyan on focus */
-            box-shadow: 0 0 8px rgba(0, 188, 212, 0.3); /* Focus shadow */
+            border-color: #00bcd4;
+            box-shadow: 0 0 8px rgba(0, 188, 212, 0.3);
         }
 
         #results, #top-speed-display {
-            margin-top: 25px; /* Increased margin */
+            margin-top: 25px;
             font-weight: bold;
-            color: #37474f; /* Darker grey for results */
+            color: #37474f;
         }
 
         .error {
-            color: #ff5722; /* Deep orange for errors */
-            background-color: rgba(255, 87, 34, 0.1); /* Light orange background for errors */
-            text-decoration: underline dotted #ff7043; /* Dotted underline */
+            color: #ff5722;
+            background-color: rgba(255, 87, 34, 0.1);
+            text-decoration: underline dotted #ff7043;
         }
 
         button {
-            padding: 12px 25px; /* Increased button padding */
+            padding: 12px 25px;
             font-size: 1.1em;
             border: none;
             border-radius: 8px;
-            background-color: #00bcd4; /* Cyan button color */
+            background-color: #00bcd4;
             color: white;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease; /* Added transform transition */
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #0097a7; /* Darker cyan on hover */
-            transform: scale(1.05); /* Slight scale up on hover */
+            background-color: #0097a7;
+            transform: scale(1.05);
         }
 
         button:active {
-            transform: scale(1.0); /* Reset scale on active */
+            transform: scale(1.0);
         }
 
         .error-highlight {
-            color: #ff5722; /* Deep orange for incorrect characters in target sentence */
+            color: #ff5722;
         }
 
-        #speed-display, #error-display {
-            margin-bottom: 15px; /* Increased margin */
+        #speed-display, #error-display, #max-speed-2s-display {
+            margin-bottom: 15px;
             font-size: 1.1em;
         }
 
@@ -115,6 +115,7 @@
             <!-- Sentence will be displayed here -->
         </div>
         <div id="speed-display">Speed: <span id="wpm">0</span> WPM</div>
+        <div id="max-speed-2s-display">Max Speed (2s): <span id="max-wpm-2s">0</span> WPM</div>
         <div id="error-display">Errors: <span id="error-count">0</span></div>
         <textarea id="user-input" placeholder="Start typing here..."></textarea>
         <div id="results" style="display: none;">
@@ -140,6 +141,7 @@
         const resetButton = document.getElementById('reset-button');
         const errorSound = document.getElementById('error-sound');
         const topSpeedDisplay = document.getElementById('top-speed');
+        const maxWPM2sDisplay = document.getElementById('max-wpm-2s'); // Element for max 2s WPM
 
 const sentences = [
 "Be just and fair in your dealings with all people, regardless of belief.",
@@ -177,7 +179,10 @@ const sentences = [
         let sentenceCharacterSpans = [];
         let typedCharacters = 0;
         let testStarted = false;
-        let topSpeed = 0; // Variable to hold top speed
+        let topSpeed = 0;
+        let startTimeWindow;      // Start time for 2-second window
+        let typedCharactersWindow; // Characters typed in 2-second window
+        let maxWPM2Seconds = 0;   // Max WPM in any 2-second window
 
         function getRandomSentence() {
             return sentences[Math.floor(Math.random() * sentences.length)];
@@ -223,6 +228,11 @@ const sentences = [
             wpmDisplay.textContent = '0';
             errorCountDisplay.textContent = '0';
             testStarted = false;
+            maxWPM2Seconds = 0; // Reset max 2s WPM
+            maxWPM2sDisplay.textContent = '0'; // Reset display
+            startTimeWindow = null; // Reset window timer
+            typedCharactersWindow = 0; // Reset window char count
+
 
             sentenceCharacterSpans.forEach(span => {
                 span.classList.remove('error-highlight');
@@ -245,6 +255,20 @@ const sentences = [
             return Math.max(0, wpm);
         }
 
+        function calculateWPM2Seconds() {
+            if (!startTimeWindow) return 0; // Prevent division by zero at start
+
+            const currentTime = Date.now();
+            const timeElapsedSeconds = (currentTime - startTimeWindow) / 1000;
+
+            if (timeElapsedSeconds <= 0) return 0; // Avoid division by zero or negative time
+
+            const wordsTyped = typedCharactersWindow / 5;
+            const wpm2s = Math.round((wordsTyped / (timeElapsedSeconds / 60))); // WPM calculation
+            return Math.max(0, wpm2s); // Ensure WPM is not negative
+        }
+
+
         function checkInput(event) {
             if (!testStarted && event.inputType) {
                 if (event.inputType !== 'insertFromPaste' && event.inputType !== 'insertComposition') {
@@ -257,10 +281,16 @@ const sentences = [
                 return;
             }
 
+            if (!startTimeWindow) {
+                startTimeWindow = Date.now(); // Start 2-second window timer
+                typedCharactersWindow = 0;     // Initialize character count for the window
+            }
 
             const typedText = userInput.value;
             typedCharacters = typedText.length;
             errors = 0;
+            typedCharactersWindow++; // Increment character count for 2-second WPM
+
 
             sentenceCharacterSpans.forEach(span => span.classList.remove('error-highlight'));
 
@@ -276,6 +306,17 @@ const sentences = [
 
             errorCountDisplay.textContent = errors;
             wpmDisplay.textContent = calculateWPM();
+
+            // Calculate and update 2-second max WPM
+            const currentTime = Date.now();
+            if (currentTime - startTimeWindow >= 2000) { // 2 seconds have passed
+                const currentWPM2Seconds = calculateWPM2Seconds();
+                maxWPM2Seconds = Math.max(maxWPM2Seconds, currentWPM2Seconds);
+                maxWPM2sDisplay.textContent = maxWPM2Seconds;
+
+                startTimeWindow = Date.now(); // Reset window timer
+                typedCharactersWindow = 0;     // Reset character count for the window
+            }
         }
 
 
@@ -290,14 +331,19 @@ const sentences = [
                 finalWpmDisplay.textContent = finalWPM;
                 finalErrorCountDisplay.textContent = errors;
                 resultsDisplay.style.display = 'block';
-                alert(`Your Typing Speed: ${finalWPM} WPM`); // Alert with speed
-                saveTopSpeed(finalWPM); // Save top speed
+
+                let alertMessage = `Your Typing Speed: ${finalWPM} WPM`;
+                if (finalWPM > 200) {
+                    alertMessage += "\n\n⚠️ Cheating Detected!";
+                }
+                alert(alertMessage); // Alert with speed and cheating warning
+                saveTopSpeed(finalWPM);
             }
         });
 
         resetButton.addEventListener('click', startGame);
 
-        loadTopSpeed(); // Load top speed on page load
+        loadTopSpeed();
         startGame();
     </script>
 </body>
