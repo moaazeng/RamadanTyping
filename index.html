@@ -115,7 +115,7 @@
             <!-- Sentence will be displayed here -->
         </div>
         <div id="speed-display">Speed: <span id="wpm">0</span> WPM</div>
-        <div id="max-speed-2s-display">Max Speed (2s): <span id="max-wpm-2s">0</span> WPM</div>
+        <div id="max-speed-2s-display">Max Speed (w): <span id="max-wpm-2s">0</span> WPM</div>
         <div id="error-display">Errors: <span id="error-count">0</span></div>
         <textarea id="user-input" placeholder="Start typing here..."></textarea>
         <div id="results" style="display: none;">
@@ -332,11 +332,13 @@ const sentences = [
                 finalErrorCountDisplay.textContent = errors;
                 resultsDisplay.style.display = 'block';
 
-                let alertMessage = `Your Typing Speed: ${finalWPM} WPM`;
-                if (finalWPM > 200) {
+                if (finalWPM > 150) {
+				    let alertMessage = `Your Typing Speed: ${finalWPM} WPM`;
+
                     alertMessage += "\n\n⚠️ Cheating Detected!";
+					alert(alertMessage); // Alert with speed and cheating warning
                 }
-                alert(alertMessage); // Alert with speed and cheating warning
+                
                 saveTopSpeed(finalWPM);
             }
         });
